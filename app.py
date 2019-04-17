@@ -43,8 +43,8 @@ def index():
             res['results'] = [Summary(*result)._asdict() for result in list(db.fetchall())]
             res['successful'] = True
 
-    except Exception as e:
-        print(e)
+    except Exception as err:
+        print(err)
         pass
 
     return flask.jsonify(res)
