@@ -21,22 +21,22 @@ def index():
     res = { 'successful': False, 'results': [] }
 
     try:
+        req = flask.request
+        condition = ''
+
+        template = '''
+            select {}
+            from Summary
+            {}
+            order by rand()
+            limit 1;
+        '''
+
+        if req.method == 'POST':
+            data = json.loads(str(req.data, 'ascii'))
+            condition = 'where Date = "{}"'.format(data['date'])
+
         with pymysql.connect(HOST, user=USER, port=PORT, passwd=PASS, db=NAME) as db:
-            req = flask.request
-            condition = ''
-
-            template = '''
-                select {}
-                from Summary
-                {}
-                order by rand()
-                limit 1;
-            '''
-
-            if req.method == 'POST':
-                data = json.loads(str(req.data, 'ascii'))
-                condition = 'where Date = "{}"'.format(data['date'])
-
             query = template.format(columns, condition)
             db.execute(query)
 
