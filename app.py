@@ -21,30 +21,30 @@ def index():
     res = { 'successful': False, 'results': [] }
 
     try:
+        req = flask.request
+        condition = ''
+
+        template = '''
+            select {}
+            from Summary
+            {}
+            order by rand()
+            limit 1;
+        '''
+
+        if req.method == 'POST':
+            data = json.loads(str(req.data, 'ascii'))
+            condition = 'where Date = "{}"'.format(data['date'])
+
         with pymysql.connect(HOST, user=USER, port=PORT, passwd=PASS, db=NAME) as db:
-            req = flask.request
-            condition = ''
-
-            template = '''
-                select {}
-                from Summary
-                {}
-                order by rand()
-                limit 1;
-            '''
-
-            if req.method == 'POST':
-                data = json.loads(str(req.data, 'ascii'))
-                condition = 'where Date = "{}"'.format(data['date'])
-
             query = template.format(columns, condition)
             db.execute(query)
 
             res['results'] = [Summary(*result)._asdict() for result in list(db.fetchall())]
             res['successful'] = True
 
-    except Exception as e:
-        print(e)
+    except Exception as err:
+        print(err)
         pass
 
     return flask.jsonify(res)
