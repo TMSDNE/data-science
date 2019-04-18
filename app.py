@@ -1,6 +1,5 @@
 import pymysql as sql
 import collections
-import flask
 import json
 import os
 
@@ -13,20 +12,16 @@ fields = ["date", "commentary"]
 columns = ', '.join(fields)
 Summary = collections.namedtuple("Summary", fields)
 
-app = flask.Flask(__name__)
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
+def handler(event, context):
     res = { 'successful': False, 'results': [] }
 
     try:
-        req = flask.request
         condition = ''
 
         template = 'select {} from Summary {} order by rand() limit 1;'
 
-        if req.method == 'POST':
-            data = json.loads(str(req.data, 'ascii'))
+        if event['httpMethod'] == 'POST':
+            data = json.loads(event['body'])
             condition = 'where Date = "{}"'.format(data['date'])
 
         with sql.connect(host=DB_HOST, db=DB_NAME, user=DB_USER, password=DB_PASS) as db:
@@ -40,4 +35,7 @@ def index():
         print(err)
         pass
 
-    return flask.jsonify(res)
+    return {
+        'statusCode': 200,
+        'body': json.dumps(res)
+    } 
