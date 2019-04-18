@@ -1,20 +1,19 @@
-import psycopg2 as pg
+import pymysql as sql
 import collections
 import flask
 import json
 import os
 
 DB_HOST = os.environ.get("DB_HOST")
-DB_PORT = int(os.environ.get("DB_PORT"))
 DB_NAME = os.environ.get("DB_NAME")
 DB_USER = os.environ.get("DB_USER")
 DB_PASS = os.environ.get("DB_PASS")
 
-app = flask.Flask(__name__)
-
 fields = ["date", "commentary"]
 columns = ', '.join(fields)
 Summary = collections.namedtuple("Summary", fields)
+
+app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -24,20 +23,18 @@ def index():
         req = flask.request
         condition = ''
 
-        template = 'select {} from Summary {} order by random() limit 1;'
+        template = 'select {} from Summary {} order by rand() limit 1;'
 
         if req.method == 'POST':
             data = json.loads(str(req.data, 'ascii'))
             condition = 'where Date = "{}"'.format(data['date'])
 
-        with pg.connect(dbname=DB_NAME, user=DB_USER, host=DB_HOST, port=DB_PORT, password=DB_PASS) as db:
+        with sql.connect(host=DB_HOST, db=DB_NAME, user=DB_USER, password=DB_PASS) as db:
             query = template.format(columns, condition)
+            db.execute(query)
 
-            with db.cursor() as cur:
-                cur.execute(query)
-
-                res['results'] = [Summary(*result)._asdict() for result in cur.fetchall()]
-                res['successful'] = True
+            res['results'] = [Summary(*result)._asdict() for result in db.fetchall()]
+            res['successful'] = True
 
     except Exception as err:
         print(err)
